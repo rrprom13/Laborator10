@@ -3,12 +3,15 @@ package ro.pub.cs.systems.eim.lab10.googlemapsgeocoding.service;
 import android.app.IntentService;
 import android.content.Intent;
 import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import ro.pub.cs.systems.eim.lab10.googlemapsgeocoding.general.Constants;
 
@@ -52,9 +55,27 @@ public class GetLocationAddressIntentService extends IntentService {
         // iterate over the address list
         // concatenate all lines from each address (number of lines: getMaxAddressLineIndex(); specific line: getAddressLine()
         // call handleResult method with result (Constants.RESULT_SUCCESS, Constants.RESULT_FAILURE) and the address details / error message
-
-        errorMessage = "Not implemented yet";
-        handleResult(Constants.RESULT_FAILURE, errorMessage);
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), Constants.NUMBER_OF_ADDRESSES);
+            String result = "";
+            Log.i(Constants.TAG, Integer.toString(addressList.size()));
+            if (addressList.size() == 0) {
+                handleResult(Constants.RESULT_FAILURE, "No address found");
+            } else {
+                for (Address address : addressList) {
+                    for (int i = 0 ; i < address.getMaxAddressLineIndex() ; i++) {
+                        result += address.getAddressLine(i);
+                    }
+                    result += "\n";
+                }
+                Log.i(Constants.TAG, result);
+                handleResult(Constants.RESULT_SUCCESS, result);
+            }
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleResult(int resultCode, String message) {

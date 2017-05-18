@@ -11,6 +11,11 @@ import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingEvent;
+
+import java.util.List;
+
 import ro.pub.cs.systems.eim.lab10.R;
 import ro.pub.cs.systems.eim.lab10.googlemapsgeofencing.general.Constants;
 import ro.pub.cs.systems.eim.lab10.googlemapsgeofencing.view.GoogleMapsGeofenceEventActivity;
@@ -36,7 +41,29 @@ public class GeofenceTrackerIntentService extends IntentService {
         // - include the transition type
         // - include the request identifier (getRequestId()) for each  geofence that triggered the event (getTriggeringGeofences())
         // send a notification with the detailed message (sendNotification())
+        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+        if (geofencingEvent.hasError()) {
+            int errorCode = geofencingEvent.getErrorCode();
+            /*
+            if (errorCode == Constants.GEOFENCE_NOT_AVAILABLE_ERROR) {
 
+            }
+            if (errorCode == Constants.GEOFENCE_TOO_MANY_GEOFENCES_ERROR) {
+
+            }
+            if (errorCode == Constants.GEOFENCE_TOO_MANY_PENDING_INTENTS_ERROR) {
+
+            }*/
+            Log.e(Constants.TAG, "Event not found");
+            return;
+        }
+        int geofenceTransition = geofencingEvent.getGeofenceTransition();
+        List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+        String message = Constants.GEOFENCE_TRANSITION_ENTER;
+        for (Geofence geofence : triggeringGeofences) {
+            message += " " + geofence.getRequestId();
+        }
+        sendNotification(message);
     }
 
     private void sendNotification(String notificationDetails) {

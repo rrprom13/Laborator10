@@ -1,6 +1,10 @@
 package ro.pub.cs.systems.eim.lab10.googlemapslocationupdate.view;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -59,6 +63,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
     }
 
     private NavigateToLocationButtonClickListener navigateToLocationButtonClickListener = new NavigateToLocationButtonClickListener();
+
     private class NavigateToLocationButtonClickListener implements Button.OnClickListener {
 
         @Override
@@ -83,6 +88,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
     }
 
     private LocationUpdatesStatusButtonClickListener locationUpdatesStatusButtonClickListener = new LocationUpdatesStatusButtonClickListener();
+
     private class LocationUpdatesStatusButtonClickListener implements Button.OnClickListener {
 
         @Override
@@ -99,6 +105,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
     }
 
     private MapTypeSpinnerListener mapTypeSpinnerListener = new MapTypeSpinnerListener();
+
     private class MapTypeSpinnerListener implements AdapterView.OnItemSelectedListener {
 
         @Override
@@ -123,7 +130,8 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
         }
 
         @Override
-        public void onNothingSelected(AdapterView<?> adapterView) { }
+        public void onNothingSelected(AdapterView<?> adapterView) {
+        }
     }
 
     @Override
@@ -132,15 +140,15 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
         setContentView(R.layout.activity_google_maps);
         Log.i(Constants.TAG, "onCreate() callback method was invoked");
 
-        latitudeEditText = (EditText)findViewById(R.id.latitude_edit_text);
-        longitudeEditText = (EditText)findViewById(R.id.longitude_edit_text);
-        navigateToLocationButton = (Button)findViewById(R.id.navigate_to_location_button);
+        latitudeEditText = (EditText) findViewById(R.id.latitude_edit_text);
+        longitudeEditText = (EditText) findViewById(R.id.longitude_edit_text);
+        navigateToLocationButton = (Button) findViewById(R.id.navigate_to_location_button);
         navigateToLocationButton.setOnClickListener(navigateToLocationButtonClickListener);
 
-        locationUpdatesStatusButton = (Button)findViewById(R.id.location_updates_status_button);
+        locationUpdatesStatusButton = (Button) findViewById(R.id.location_updates_status_button);
         locationUpdatesStatusButton.setOnClickListener(locationUpdatesStatusButtonClickListener);
 
-        mapTypeSpinner = (Spinner)findViewById(R.id.map_type_spinner);
+        mapTypeSpinner = (Spinner) findViewById(R.id.map_type_spinner);
         mapTypeSpinner.setOnItemSelectedListener(mapTypeSpinnerListener);
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -168,7 +176,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
             googleApiClient.connect();
         }
         if (googleMap == null) {
-            ((MapFragment)getFragmentManager().findFragmentById(R.id.google_map)).getMapAsync(new OnMapReadyCallback() {
+            ((MapFragment) getFragmentManager().findFragmentById(R.id.google_map)).getMapAsync(new OnMapReadyCallback() {
                 @Override
                 public void onMapReady(GoogleMap readygoogleMap) {
                     googleMap = readygoogleMap;
@@ -234,7 +242,7 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
             if (locationUpdatesStatus) {
                 startLocationUpdates();
             }
-        } catch(SecurityException securityException) {
+        } catch (SecurityException securityException) {
             Log.e(Constants.TAG, "An exception has occurred: " + securityException.getMessage());
             if (Constants.DEBUG) {
                 securityException.printStackTrace();
@@ -262,7 +270,31 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
         // navigate to current position (lastLocation), if available
         // disable the latitudeEditText, longitudeEditText, navigateToLocationButton widgets
         // the whole routine should be put in a try ... catch block for SecurityExeption
-
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                googleApiClient,
+                locationRequest,
+                this
+        );
+        locationUpdatesStatus = true;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        googleMap.setMyLocationEnabled(true);
+        locationUpdatesStatusButton.setBackgroundColor(Color.GREEN);
+        locationUpdatesStatusButton.setText(getResources().getString(R.string.stop_location_updates));
+        if (lastLocation != null) {
+            navigateToLocation(lastLocation);
+        }
+        latitudeEditText.setEnabled(false);
+        longitudeEditText.setEnabled(false);
+        navigateToLocationButton.setEnabled(false);
     }
 
     private void stopLocationUpdates() {
@@ -274,7 +306,27 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
         // update the locationUpdatesStatusButton text & color
         // enable the latitudeEditText, longitudeEditText, navigateToLocationButton widgets	and reset their content
         // the whole routine should be put in a try ... catch block for SecurityExeption
-
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                googleApiClient,
+                this
+        );
+        locationUpdatesStatus = false;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        googleMap.setMyLocationEnabled(false);
+        locationUpdatesStatusButton.setBackgroundColor(Color.RED);
+        locationUpdatesStatusButton.setText(getResources().getString(R.string.start_location_updates));
+        latitudeEditText.setEnabled(true);
+        longitudeEditText.setEnabled(true);
+        navigateToLocationButton.setEnabled(true);
     }
 
     @Override

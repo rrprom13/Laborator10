@@ -146,7 +146,13 @@ public class GoogleMapsActivity extends AppCompatActivity implements GoogleApiCl
             // clear the Google Map
             // clear the places List
             // notify the placesAdapter that the data set was changed
-
+            if (places.size() > 0) {
+                googleMap.clear();
+                places.clear();
+                placesAdapter.notifyDataSetChanged();
+            } else {
+                Log.e(Constants.TAG, "No markers on the map to remove");
+            }
         }
     }
 
